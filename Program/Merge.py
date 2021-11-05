@@ -2,6 +2,14 @@ import openpyxl
 import os
 
 files = {"input": "", "output": ""}
+subject = []
+
+
+def hashmap():
+    data = {}
+    for s in subject:
+        data[s] = 0
+    return data
 
 
 def getpath():
@@ -14,56 +22,50 @@ def getpath():
 
 
 def get_subject():
-    res = []
     wb = openpyxl.load_workbook(files["input"])
-    print(files["input"])
     for name in wb.sheetnames:
         sheet = wb[name]
         for row in sheet.rows:
             for cell in row:
-                if not res.count(cell.value) and cell.value is not None:
-                    res.append(cell.value)
+                if not subject.count(cell.value) and cell.value is not None:
+                    subject.append(str(cell.value))
             break
-    return res
+    wb.close()
 
 
 def write_subject():
     wb = openpyxl.load_workbook(files["output"])
     sheet = wb["Sheet2"]
-    sheet.append(get_subject())
+    sheet.append(subject)
     wb.save(files["output"])
 
 
 def init_data():
     tmp = {}
-    for item in get_subject():
+    for item in subject:
         tmp[item] = []
     return tmp
 
 
 def get_data():
-    subject = get_subject()
     sub = ""
     data = init_data()
     wb = openpyxl.load_workbook(files["input"])
     for sheet in wb.sheetnames:
-        if sheet == '报告':
-            continue
+        record = hashmap()
         ws = wb[sheet]
-        length = 0
         for col in ws.columns:
             for cell in col:
-                if subject.count(cell.value):
-                    sub = cell.value
-                elif sub != "":
+                if subject.count(str(cell.value)):
+                    sub = str(cell.value)
+                elif sub != "" and cell.value != "":
                     data[sub].append(str(cell.value))
-                    if data[sub] != "":
-                        length = len(data[sub])
+                    record[sub] = record[sub] + 1
             sub = ""
-            for s in subject:
-                if data[s] == "":
-                    data[s].append([" "]*length)
-    print(data['项目'])
+        for k, v in record.items():
+            if v == 0:
+                for i in range(record['项目']):
+                    data[k].append("None")
     return data
 
 
@@ -71,12 +73,14 @@ def write_data():
     data = get_data()
     wo = openpyxl.load_workbook(files["output"])
     sheet2 = wo["Sheet1"]
-    for subject in get_subject():
-        sheet2.append(data[subject])
+    for sub in subject:
+        # print(data[sub])
+        sheet2.append(data[sub])
     wo.save(files["output"])
 
 
 if __name__ == '__main__':
     getpath()
-    # write_data()
-    get_data()
+    get_subject()
+    # write_subject()
+    write_data()
